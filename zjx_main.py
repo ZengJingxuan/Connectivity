@@ -17,19 +17,24 @@ name = ch1.columns
 y1 = zpr.main(ch1_p, ch2_p)  # generate normalized mat
 y1 = zpr.rep_outl(y1)       # replace outliers
 y1_tar = zpr.select_tar(ch1_p,y1)
-tar_name = y1_tar.columns.values
+tar_name_y1 = y1_tar.columns.values
 
+### 将字体设为1.5倍
+sns.set(font_scale=1.5)
 ### heatmap
-sns.clustermap(y1_tar.T, yticklabels=tar_name, col_cluster=False, row_cluster=False,cmap='jet',vmin=-3,vmax=3)
+hm_y1_tar = sns.clustermap(y1_tar.T, yticklabels=tar_name_y1, xticklabels=50, col_cluster=False, row_cluster=False,cmap='jet',vmin=-3,vmax=3,cbar_pos=(0.02, 0.79, 0.03, 0.2))
 ### correlation:
 co_y1_tar = np.corrcoef(y1_tar.T)
-sns.clustermap(co_y1_tar, xticklabels=tar_name, yticklabels=tar_name, col_cluster=False, row_cluster=False, cmap='jet',vmin=-1, vmax=1)
+co_hm_y1_tar = sns.clustermap(co_y1_tar, xticklabels=tar_name_y1, yticklabels=tar_name_y1, col_cluster=False, row_cluster=False, cmap='jet',vmin=-1, vmax=1,cbar_pos=(0.02, 0.79, 0.03, 0.2))
 ##
 
 ### all neurons
-sns.clustermap(y1.T, yticklabels=True, col_cluster=False, cmap='jet',vmin=-3, vmax=3)
-co_eff = np.corrcoef(y1.T)  # co_eff matrix
-sns.clustermap(co_eff, cmap='jet',vmin=-1, vmax=1)  # heatmap of co_eff matrix
-pr.histplot(co_eff, label='0102-1DA-W3')
+hm_y1 = sns.clustermap(y1.T, yticklabels=True, xticklabels=50, col_cluster=False, cmap='jet',vmin=-3, vmax=3,cbar_pos=(0.02, 0.79, 0.03, 0.2))
+###
+co_eff_y3 = np.corrcoef(y1.T)  # co_eff matrix
+co_y1 = sns.clustermap(co_eff_y3, cmap='jet',vmin=-1, vmax=1,cbar_pos=(0.02, 0.79, 0.03, 0.2))  # heatmap of co_eff matrix
+
+
+zpr.histplot(co_eff, label='0102-1DA-W3')
 plt.legend()
 plt.show()
