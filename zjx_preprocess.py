@@ -4,6 +4,7 @@ import matplotlib as mpl
 from scipy.signal import medfilt
 mpl.use('TkAgg')
 from scipy.optimize import curve_fit
+import seaborn as sns
 
 
 def de_noise(mat):
