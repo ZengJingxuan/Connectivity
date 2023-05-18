@@ -87,6 +87,31 @@ def select_tar(ch1_p,arr):
     arr = arr.iloc[:, matches]
     return arr
 
+### all neurons heatmap yticklabel
+def re_order_all(ch1_p,hm):
+    hm_ylabel = hm.dendrogram_row.reordered_ind
+    ch1 = pd.read_csv(ch1_p, index_col=0)
+    re_ch1 = ch1.iloc[:, hm_ylabel]
+    name_list = re_ch1.columns.tolist()
+    for i in range(len(name_list)):
+        if i % 3 == 0:
+            name_list[i] = name_list[i]  # 第一组：1+3*n
+        elif i % 3 == 1:
+            name_list[i] = '---------' + name_list[i]   # 第二组：2+3*n
+        else:
+            name_list[i] = '-------------------' + name_list[i]   # 第三组：3+3*n
+    print(name_list)
+    re_name = np.array(name_list)
+    return re_name
+
+
+### 概率分布直方图，第一行转为一维数组，第二行去除重复值（三角对称），第三行 n!=0(n不为0的被保留）
+def histplot(data,label):
+    dt = data.flatten()
+    dt = set(dt)
+    dt = [n for n in dt if n != 0]
+    sns.histplot(dt,stat='probability',label=label)
+
 
 
 

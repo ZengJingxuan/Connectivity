@@ -29,8 +29,13 @@ co_hm_y1_tar = sns.clustermap(co_y1_tar, xticklabels=tar_name_y1, yticklabels=ta
 ##
 
 ### all neurons
+sns.set(font_scale=0.8)
 hm_y1 = sns.clustermap(y1.T, yticklabels=True, xticklabels=50, col_cluster=False, cmap='jet',vmin=-3, vmax=3,cbar_pos=(0.02, 0.79, 0.03, 0.2))
 ###
+re_name_y1 = zpr.re_order_all(ch1_p,hm_y1)
+hm_y1.ax_heatmap.set_yticklabels(re_name_y1)
+plt.show()
+
 co_eff_y3 = np.corrcoef(y1.T)  # co_eff matrix
 co_y1 = sns.clustermap(co_eff_y3, cmap='jet',vmin=-1, vmax=1,cbar_pos=(0.02, 0.79, 0.03, 0.2))  # heatmap of co_eff matrix
 
