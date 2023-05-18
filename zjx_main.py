@@ -14,23 +14,24 @@ ch1_p = r"230102-W3-ch1.csv"
 ch2_p = r"230102-W3-ch2.csv"
 ch1 = pd.read_csv(ch1_p, index_col=0)
 name = ch1.columns
-y1 = zpr.main(ch1_p, ch2_p)  # generate normalized mat
-y1 = zpr.rep_outl(y1)       # replace outliers
+y1 = zpr.main(ch1_p, ch2_p)          # generate normalized mat
 y1_tar = zpr.select_tar(ch1_p,y1)
 tar_name_y1 = y1_tar.columns.values
 
 ### 将字体设为1.5倍
 sns.set(font_scale=1.5)
 ### heatmap
-hm_y1_tar = sns.clustermap(y1_tar.T, yticklabels=tar_name_y1, xticklabels=50, col_cluster=False, row_cluster=False,cmap='jet',vmin=-3,vmax=3,cbar_pos=(0.02, 0.79, 0.03, 0.2))
+hm_y1_tar = sns.clustermap(y1_tar.T, yticklabels=tar_name_y1, xticklabels=50, col_cluster=False, row_cluster=False,cmap='jet',vmin=-3,vmax=3,cbar_pos=(0.13, 0.595, 0.03, 0.2))
 ### correlation:
 co_y1_tar = np.corrcoef(y1_tar.T)
-co_hm_y1_tar = sns.clustermap(co_y1_tar, xticklabels=tar_name_y1, yticklabels=tar_name_y1, col_cluster=False, row_cluster=False, cmap='jet',vmin=-1, vmax=1,cbar_pos=(0.02, 0.79, 0.03, 0.2))
+co_hm_y1_tar = sns.clustermap(co_y1_tar, xticklabels=tar_name_y1, yticklabels=tar_name_y1, col_cluster=False, row_cluster=False, cmap='jet',vmin=-1, vmax=1,cbar_pos=(0.1, 0.595, 0.03, 0.2))
 ##
+v_y1_tar = co_hm_y1_tar.data2d.values
+
 
 ### all neurons
 sns.set(font_scale=0.8)
-hm_y1 = sns.clustermap(y1.T, yticklabels=True, xticklabels=50, col_cluster=False, cmap='jet',vmin=-3, vmax=3,cbar_pos=(0.02, 0.79, 0.03, 0.2))
+hm_y1 = sns.clustermap(y1.T, yticklabels=True, xticklabels=50, col_cluster=False, cmap='jet',vmin=-3, vmax=3,cbar_pos=(0.02, 0.795, 0.03, 0.2))
 ###
 re_name_y1 = zpr.re_order_all(ch1_p,hm_y1)
 hm_y1.ax_heatmap.set_yticklabels(re_name_y1)
