@@ -34,11 +34,6 @@ def de_trend(mat):
     mat = mat / new
     return mat, new
 
-def norm(arr):
-    mean = np.mean(arr,axis=0)
-    std = np.std(arr,axis = 0)
-    return (arr - mean) / std
-
 
 ### outliers detect and replace    beforer norm
 def rep_outl(arr):
@@ -47,7 +42,7 @@ def rep_outl(arr):
         std = np.std(arr[col])
         threshold1 = mean + 2 * std
         threshold2 = mean - 2 * std
-        outlier_indices = np.where((arr[col] > threshold1)& (arr[col] < threshold2))[0]
+        outlier_indices = np.where((arr[col] > threshold1) & (arr[col] < threshold2))[0]
         for index in outlier_indices:
             left = max(index - 2, 0)  # 左侧取2个点
             right = min(index + 2, len(arr) - 1)  # 右侧取2个点
@@ -56,6 +51,11 @@ def rep_outl(arr):
             arr[col][index] = median
     return arr
 
+
+def norm(arr):
+    mean = np.mean(arr,axis=0)
+    std = np.std(arr,axis = 0)
+    return (arr - mean) / std
 
 
 def main(ch1_p,ch2_p):
