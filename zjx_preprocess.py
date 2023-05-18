@@ -40,6 +40,24 @@ def norm(arr):
     return (arr - mean) / std
 
 
+### outliers detect and replace    beforer norm
+def rep_outl(arr):
+    for col in arr.columns[1:]:
+        mean = np.mean(arr[col])
+        std = np.std(arr[col])
+        threshold1 = mean + 2 * std
+        threshold2 = mean - 2 * std
+        outlier_indices = np.where((arr[col] > threshold1)& (arr[col] < threshold2))[0]
+        for index in outlier_indices:
+            left = max(index - 2, 0)  # 左侧取2个点
+            right = min(index + 2, len(arr) - 1)  # 右侧取2个点
+            neighbors = arr[col][left:right + 1]
+            median = np.median(neighbors)
+            arr[col][index] = median
+    return arr
+
+
+
 def main(ch1_p,ch2_p):
     ch1 = pd.read_csv(ch1_p, index_col=0)
     ch2 = pd.read_csv(ch2_p, index_col=0)
@@ -50,25 +68,13 @@ def main(ch1_p,ch2_p):
     fret_hm = fret_hm.T
     fret_hm_dn = de_noise(fret_hm)
     fret_hm_dt, curve = de_trend(fret_hm_dn)
-    fret_hm_nm = norm(fret_hm_dt.T)
+    fret_hm_dt = fret_hm_dt.T
+    fret_hm_dt = pd.DataFrame(fret_hm_dt, columns=name)
+    fret_hm_outl = rep_outl(fret_hm_dt)
+    fret_hm_nm = norm(fret_hm_outl)
     fret = pd.DataFrame(fret_hm_nm, columns=name)
     return fret
 
-
-### outliers detect and replace    after y1 = zpr.main(ch1_p, ch2_p)  in main
-def rep_outl(arr):
-    for col in arr.columns[1:]:
-        mean = np.mean(arr[col])
-        std = np.std(arr[col])
-        threshold = mean + 2 * std
-        outlier_indices = np.where(arr[col] > threshold)[0]
-        for index in outlier_indices:
-            left = max(index - 2, 0)  # 左侧取2个点
-            right = min(index + 2, len(arr) - 1)  # 右侧取2个点
-            neighbors = arr[col][left:right + 1]
-            median = np.median(neighbors)
-            arr[col][index] = median
-    return arr
 
 
 #### select target neurons
