@@ -28,8 +28,7 @@ v_y1_tar = co_hm_y1_tar.data2d.values
 
 ### all neurons
 sns.set(font_scale=0.8)
-ordered_y1 = zpr.cluster(y1)
-hm_y1 = sns.clustermap(y1.T, yticklabels=True, xticklabels=50, col_cluster=False, row_cluster=False, cmap='jet',vmin=-3, vmax=3,cbar_pos=(0.02, 0.795, 0.03, 0.2))
+ordered_y1, hm_y1 = zpr.cluster(y1)     ### choose True & False (if use optimal_leaf_ordering)
 ### yticklabel easier to see
 re_name_ordered_y1 = zpr.re_name_all(ordered_y1)
 hm_y1.ax_heatmap.set_yticklabels(re_name_ordered_y1)
