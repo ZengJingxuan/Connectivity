@@ -163,18 +163,25 @@ def select_tar(ch1_p, ch2_p, arr):
 
 
 ## matlab way to cluster, re_order all neurons
-def cluster(arr):
-    dist = pdist(arr.T)
-    lin = linkage(dist)
-    ordered_tree = optimal_leaf_ordering(lin, dist)
-    ordered_index = leaves_list(ordered_tree)
-    ordered_arr = arr.iloc[:, ordered_index]
-    return ordered_arr
+def cluster(arr, use_optimal_leaf_ordering=True):
+    if use_optimal_leaf_ordering:
+        dist = pdist(arr.T)
+        lin = linkage(dist)
+        ordered_tree = optimal_leaf_ordering(lin, dist)
+        ordered_index = leaves_list(ordered_tree)
+        ordered_arr = arr.iloc[:, ordered_index]
+        hm = sns.clustermap(ordered_arr.T, yticklabels=True, xticklabels=50, col_cluster=False, row_cluster=False,
+                               cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2))
+    else:
+        ordered_arr = arr
+        hm = sns.clustermap(ordered_arr.T, yticklabels=True, xticklabels=50, col_cluster=False,
+                               cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2))
+    return ordered_arr, hm
 
 
 ### all neurons heatmap yticklabel (make yticklabel easier to see)
-def re_name_all(ordered_y1):
-    name_list = ordered_y1.columns.tolist()
+def re_name_all(arr):
+    name_list = arr.columns.tolist()
     for i in range(len(name_list)):
         if i % 3 == 0:
             name_list[i] = name_list[i]  # 第一组：1+3*n
