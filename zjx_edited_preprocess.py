@@ -194,12 +194,30 @@ def re_name_all(arr):
     return re_name
 
 
+### all neurons corr_hm yticklabel (re_name means with ___)
+def re_name_all_corr(co_hm, arr):
+    co_ylabels = arr.index[co_hm.dendrogram_row.reordered_ind]
+    co_names = arr.iloc[:, co_ylabels].columns.values
+    co_names2 = co_names.copy()
+    for i in range(len(co_names2)):
+        if i % 3 == 0:
+            co_names2[i] = co_names2[i]  # 第一组：1+3*n
+        elif i % 3 == 1:
+            co_names2[i] = '---------' + co_names2[i]   # 第二组：2+3*n
+        else:
+            co_names2[i] = '-------------------' + co_names2[i]   # 第三组：3+3*n
+    print(co_names2)
+    re_name_corr = np.array(co_names2)
+    return co_names, re_name_corr
+
+
+
 ### 概率分布直方图，第一行转为一维数组，第二行去除重复值（三角对称），第三行 n!=0(n不为0的被保留）
-def histplot(data,label):
+def histplot(data, label):
     dt = data.flatten()
     dt = set(dt)
     dt = [n for n in dt if n != 0]
-    sns.histplot(dt,stat='probability',label=label)
+    sns.histplot(dt, stat='probability', label=label)
 
 
 
