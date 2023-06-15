@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import linkage, optimal_leaf_ordering, leaves_list
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist
 import math
 
 
@@ -170,10 +170,12 @@ def cluster(arr, use_optimal_leaf_ordering=True):
         ordered_tree = optimal_leaf_ordering(lin, dist)
         ordered_index = leaves_list(ordered_tree)
         ordered_arr = arr.iloc[:, ordered_index]
+        sns.set(font_scale=0.8)
         hm = sns.clustermap(ordered_arr.T, yticklabels=True, xticklabels=50, col_cluster=False, row_cluster=False,
                                cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2))
     else:
         ordered_arr = arr
+        sns.set(font_scale=0.8)
         hm = sns.clustermap(ordered_arr.T, yticklabels=True, xticklabels=50, col_cluster=False,
                                cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2))
     return ordered_arr, hm
@@ -210,6 +212,19 @@ def re_name_all_corr(co_hm, arr):
     re_name_corr = np.array(co_names2)
     return co_names, re_name_corr
 
+
+### mean all neurons cor_heatmap yticklabel (make yticklabel easier to see)
+def re_name_mean(name_list):  ## 一维
+    for i in range(len(name_list)):
+        if i % 3 == 0:
+            name_list[i] = name_list[i]  # 第一组：1+3*n
+        elif i % 3 == 1:
+            name_list[i] = '---------' + name_list[i]   # 第二组：2+3*n
+        else:
+            name_list[i] = '-------------------' + name_list[i]   # 第三组：3+3*n
+    print(name_list)
+    re_name = np.array(name_list)
+    return re_name
 
 
 ### 概率分布直方图，第一行转为一维数组，第二行去除重复值（三角对称），第三行 n!=0(n不为0的被保留）
