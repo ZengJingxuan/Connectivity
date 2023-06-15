@@ -7,7 +7,7 @@ import numpy as np
 import re
 
 ch1_p = r"230102-W3-ch1.csv"
-ch2_p = r"230102-W3-ch2.csv"
+ch2_p = r"230102-W3-ch2.csv"    #  "230421-9DA-W1-ch2.csv"
 
 # generate normalized mat
 y1 = zpr.main(ch1_p, ch2_p)
@@ -47,8 +47,9 @@ co_y1.ax_heatmap.set_xticklabels(co_y1_xnames)
 y1_all_names = ordered_y1.columns.values.tolist()
 y1_anno_names = [name for name in y1_all_names if re.match(r'^[A-Za-z]', name)]
 y1_anno = ordered_y1[y1_anno_names]
-pd.DataFrame(y1_anno).to_csv("cor_sample3.csv")
-pd.DataFrame(y1_anno_names).to_csv("name_sample3.csv")
+co_anno_y1 = np.corrcoef(y1_anno.T)
+pd.DataFrame(y1_anno).to_csv("name_sample3.csv")
+pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
 
 
 zpr.histplot(co_eff_y1, label='0102-1DA-W3')
