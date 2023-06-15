@@ -47,8 +47,9 @@ co_y1.ax_heatmap.set_xticklabels(co_y1_xnames)
 y1_all_names = ordered_y1.columns.values.tolist()
 y1_anno_names = [name for name in y1_all_names if re.match(r'^[A-Za-z]', name)]
 y1_anno = ordered_y1[y1_anno_names]
+name_anno_y1 = y1_anno.columns.values
 co_anno_y1 = np.corrcoef(y1_anno.T)
-pd.DataFrame(y1_anno).to_csv("name_sample3.csv")
+pd.DataFrame(name_anno_y1).to_csv("name_sample3.csv")
 pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
 
 
