@@ -5,8 +5,11 @@ import seaborn as sns
 import numpy as np
 import re
 
-ch1_p = r"230102-W3-ch1.csv"
-ch2_p = r"230102-W3-ch2.csv"    #  "230421-9DA-W1-ch2.csv"
+ch1_p = r"230512-9DA-W1-ch1.csv"
+ch2_p = r"230512-9DA-W1-ch2.csv"
+
+# ch1_p = r"230102-W3-ch1.csv"
+# ch2_p = r"230102-W3-ch2.csv"
 
 # generate normalized mat
 y1 = zpr.main(ch1_p, ch2_p)
@@ -50,6 +53,20 @@ name_anno_y1 = y1_anno.columns.values
 co_anno_y1 = np.corrcoef(y1_anno.T)
 pd.DataFrame(name_anno_y1).to_csv("name_sample3.csv")
 pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
+
+
+# select most dynamic neurons
+y1_dy = zpr.select(y1_anno, 60)        ## n = ?
+dy_y1, dy_hm_y1 = zpr.cluster(y1_dy)   ## 可选False
+co_eff_dy_y1 = np.corrcoef(y1_dy.T)
+co_dy_y1 = sns.clustermap(co_eff_dy_y1, xticklabels=True, yticklabels=True, cmap='jet', vmin=-1, vmax=1, figsize=(10, 6.5))
+### labels
+co_dy_ylabels = y1_dy.index[co_dy_y1.dendrogram_row.reordered_ind]
+co_dy_y1_names = y1_dy.iloc[:, co_dy_ylabels].columns.values
+co_dy_y1.ax_heatmap.set_yticklabels(co_dy_y1_names)
+co_dy_y1.ax_heatmap.set_xticklabels(co_dy_y1_names)
+pd.DataFrame(co_dy_y1_names).to_csv("dy_name_sample6.csv")
+pd.DataFrame(co_eff_dy_y1).to_csv("dy_cor_sample6.csv")
 
 
 zpr.histplot(co_eff_y1, label='0102-1DA-W3')

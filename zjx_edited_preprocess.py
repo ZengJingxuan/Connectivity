@@ -143,14 +143,20 @@ def main(ch1_p,ch2_p):
     fret = pd.DataFrame(fret_hm_nm, columns=name[~flag_outliers])
     return fret
 
-
+### select dynamic neurons   mat = norm(time x neuron)
+def select(fret, n):
+    ind = list(fret.var().sort_values()[-n:].index)
+    mat = pd.DataFrame()
+    for i in ind:
+        mat = pd.concat([mat, fret[i]], axis=1)
+    return mat
 
 #### select target neurons
 def select_tar(ch1_p, ch2_p, arr):
     y1 = main(ch1_p, ch2_p)
     name = y1.columns
-    targets = np.array(['AVAL','AVAR','AVEL','AVER','RIML','RIMR','AIBL','AIBR','RIBL','RIBR','RMEL','RMER','AVBL','AVBR'])
-    matches = [];
+    targets = np.array(['AVAL','AVAR','AVDL','AVDR','AVEL','AVER','RIML','RIMR','AIBL','AIBR','RIBL','RIBR','RMEL','RMER','AVBL','AVBR'])
+    matches = []
     for query in targets:
       print(query)
       match = np.argwhere(name==query)
@@ -172,12 +178,12 @@ def cluster(arr, use_optimal_leaf_ordering=True):
         ordered_arr = arr.iloc[:, ordered_index]
         sns.set(font_scale=0.8)
         hm = sns.clustermap(ordered_arr.T, yticklabels=True, xticklabels=50, col_cluster=False, row_cluster=False,
-                               cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2))
+                               cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2), figsize=(8, 9))
     else:
         ordered_arr = arr
         sns.set(font_scale=0.8)
         hm = sns.clustermap(ordered_arr.T, yticklabels=True, xticklabels=50, col_cluster=False,
-                               cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2))
+                               cmap='jet', vmin=-3, vmax=3, cbar_pos=(0.02, 0.795, 0.03, 0.2), figsize=(8, 9))
     return ordered_arr, hm
 
 
@@ -209,8 +215,8 @@ def re_name_all_corr(co_hm, arr):
         else:
             co_names2[i] = '-------------------' + co_names2[i]   # 第三组：3+3*n
     print(co_names2)
-    re_name_corr = np.array(co_names2)
-    return co_names, re_name_corr
+    re_co_names = np.array(co_names2)
+    return co_names, re_co_names
 
 
 ### mean all neurons cor_heatmap yticklabel (make yticklabel easier to see)
