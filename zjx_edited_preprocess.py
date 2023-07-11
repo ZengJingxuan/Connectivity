@@ -9,12 +9,14 @@ from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import linkage, optimal_leaf_ordering, leaves_list
 from scipy.spatial.distance import pdist
 import math
+from scipy.stats import ranksums
+import os
 
 
 # for check plots
 def monplot(dat, title='', subplot_shape=111):
-    nrows = 20     # number of plots to show
-    ncols = 150    # length of plots (volumes)
+    nrows = 200     # number of plots to show
+    ncols = 1000    # length of plots (volumes)
     print('datasize', dat.shape)
     mpl.use('TkAgg')
     if subplot_shape == 111:
@@ -105,9 +107,9 @@ def norm(arr):
 def normalize2(ch1_d, ch2_d):
 
     # denoise by median filter
-    ch1_med = medfilt(ch1_d, 5)
-    ch2_med = medfilt(ch2_d, 5)
-    # check plots
+    ch1_med = medfilt(ch1_d, 7)
+    ch2_med = medfilt(ch2_d, 7)
+    # check plot
     plt.figure()
     monplot(ch1_d, 'ch1 original', 331)
     monplot(ch1_med, 'ch1 medfilt denoise', 332)
@@ -151,7 +153,7 @@ def select(fret, n):
         mat = pd.concat([mat, fret[i]], axis=1)
     return mat
 
-#### select target neurons
+### select target neurons
 def select_tar(ch1_p, ch2_p, arr):
     y1 = main(ch1_p, ch2_p)
     name = y1.columns
@@ -168,7 +170,7 @@ def select_tar(ch1_p, ch2_p, arr):
     return arr
 
 
-## matlab way to cluster, re_order all neurons
+### matlab way to cluster, re_order all neurons
 def cluster(arr, use_optimal_leaf_ordering=True):
     if use_optimal_leaf_ordering:
         dist = pdist(arr.T)
@@ -240,7 +242,191 @@ def histplot(data, label):
     dt = [n for n in dt if n != 0]
     sns.histplot(dt, stat='probability', label=label)
 
+#  dt = [n for n in dt if n != 0 and n != 1]
+
+######### mean for target and all neurons in young and old worms ######
+### young, target:
+def young_mean_tar(tar):
+    tarN = tar.iloc[:, 1]
+    tarNames = np.array(tarN)
+    Mt = len(tarNames)
+    samples = list(range(1, 9))
+    nsamples = len(samples)
+
+    coarray = np.zeros((nsamples, Mt, Mt))
+    coarray[:, :, :] = np.nan  ##  三维数组
+    folder_path = 'D:/Connectivity/metadata'
+
+    for samplei in range(nsamples):
+        file = 'tar_cor_sample' + str(samplei) + '.csv'
+        name = 'tar_name_sample' + str(samplei) + '.csv'
+        file_path = os.path.join(folder_path, file)
+        name_path = os.path.join(folder_path, name)
+        with open(file_path, 'r') as cor:
+            data = pd.read_csv(cor, index_col=0, header=None, skiprows=1)  ##  dataframe
+        data = data.to_numpy()
+        with open(name_path, 'r') as Name:
+            uniqName = pd.read_csv(Name, header=None, skiprows=1, usecols=[1])
+        uniqName = np.array(uniqName)
+        Mu = len(uniqName)
+        cellcs = np.empty(Mu)
+        cellcs = np.array(list(map(np.int_, cellcs)))
+        for celli in range(Mu):
+            indices = np.where(tarNames == uniqName[celli])[0]
+            cellcs[celli] = indices[0]
+        coarray[samplei, cellcs[:, None], cellcs[None, :]] = data
+    print(coarray)
+    return coarray, tarNames
+
+
+### old, target:
+def old_mean_tar(old_tar):
+    old_tarN = old_tar.iloc[:, 1]
+    old_tarNames = np.array(old_tarN)
+    old_Mt = len(old_tarNames)
+    old_samples = list(range(1, 8))
+    old_nsamples = len(old_samples)
+
+    old_coarray = np.zeros((old_nsamples, old_Mt, old_Mt))
+    old_coarray[:, :, :] = np.nan  ##  三维数组
+    folder_path = 'D:/Connectivity/metadata'
+
+    for old_samplei in range(old_nsamples):
+        old_file = 'old_tar_cor_sample' + str(old_samplei) + '.csv'
+        old_name = 'old_tar_name_sample' + str(old_samplei) + '.csv'
+        old_file_path = os.path.join(folder_path, old_file)
+        old_name_path = os.path.join(folder_path, old_name)
+        with open(old_file_path, 'r') as old_cor:
+            old_data = pd.read_csv(old_cor, index_col=0, header=None, skiprows=1)  ##  dataframe
+        old_data = old_data.to_numpy()
+        with open(old_name_path, 'r') as old_Name:
+            old_uniqName = pd.read_csv(old_Name, header=None, skiprows=1, usecols=[1])
+        old_uniqName = np.array(old_uniqName)
+        old_Mu = len(old_uniqName)
+        old_cellcs = np.empty(old_Mu)
+        old_cellcs = np.array(list(map(np.int_, old_cellcs)))
+        for old_celli in range(old_Mu):
+            old_indices = np.where(old_tarNames == old_uniqName[old_celli])[0]
+            old_cellcs[old_celli] = old_indices[0]
+        old_coarray[old_samplei, old_cellcs[:, None], old_cellcs[None, :]] = old_data
+    print(old_coarray)
+    return old_coarray, old_tarNames
+
+
+### young, all:
+def young_mean(all):
+    allN = all.iloc[:, 1]
+    allNames = np.array(allN)
+    Ma = len(allNames)
+    allsamples = list(range(1, 9))
+    n_allsamples = len(allsamples)
+
+    allcoarray = np.zeros((n_allsamples, Ma, Ma))
+    allcoarray[:, :, :] = np.nan  ##  三维数组
+    folder_path = 'D:/Connectivity/metadata'
+
+    for allsamplei in range(n_allsamples):
+        all_file = 'cor_sample' + str(allsamplei) + '.csv'
+        all_name = 'name_sample' + str(allsamplei) + '.csv'
+        all_file_path = os.path.join(folder_path, all_file)
+        all_name_path = os.path.join(folder_path, all_name)
+        with open(all_file_path, 'r') as all_cor:
+            all_data = pd.read_csv(all_cor, index_col=0, header=None, skiprows=1)  ##  dataframe
+        all_data = all_data.to_numpy()
+        with open(all_name_path, 'r') as allName:
+            all_uniqName = pd.read_csv(allName, header=None, skiprows=1, usecols=[1])
+        all_uniqName = np.array(all_uniqName)
+        Mau = len(all_uniqName)
+        allcellcs = np.empty(Mau)
+        allcellcs = np.array(list(map(np.int_, allcellcs)))
+        for acelli in range(Mau):
+            all_indices = np.where(allNames == all_uniqName[acelli])[0]
+            allcellcs[acelli] = all_indices[0]
+        allcoarray[allsamplei, allcellcs[:, None], allcellcs[None, :]] = all_data
+    print(allcoarray)
+    return allcoarray, allNames
+
+### old, all:
+def old_mean(old_all):
+    old_allN = old_all.iloc[:, 1]
+    old_allNames = np.array(old_allN)
+    old_Ma = len(old_allNames)
+    old_allsamples = list(range(1, 8))
+    old_n_allsamples = len(old_allsamples)
+
+    old_allcoarray = np.zeros((old_n_allsamples, old_Ma, old_Ma))
+    old_allcoarray[:, :, :] = np.nan  ##  三维数组
+    folder_path = 'D:/Connectivity/metadata'
+
+    for old_allsamplei in range(old_n_allsamples):
+        old_all_file = 'old_cor_sample' + str(old_allsamplei) + '.csv'
+        old_all_name = 'old_name_sample' + str(old_allsamplei) + '.csv'
+        old_all_file_path = os.path.join(folder_path, old_all_file)
+        old_all_name_path = os.path.join(folder_path, old_all_name)
+        with open(old_all_file_path, 'r') as old_all_cor:
+            old_all_data = pd.read_csv(old_all_cor, index_col=0, header=None, skiprows=1)  ##  dataframe
+        old_all_data = old_all_data.to_numpy()
+        with open(old_all_name_path, 'r') as old_allName:
+            old_all_uniqName = pd.read_csv(old_allName, header=None, skiprows=1, usecols=[1])
+        old_all_uniqName = np.array(old_all_uniqName)
+        old_Mau = len(old_all_uniqName)
+        old_allcellcs = np.empty(old_Mau)
+        old_allcellcs = np.array(list(map(np.int_, old_allcellcs)))
+        for old_acelli in range(old_Mau):
+            old_all_indices = np.where(old_allNames == old_all_uniqName[old_acelli])[0]
+            old_allcellcs[old_acelli] = old_all_indices[0]
+        old_allcoarray[old_allsamplei, old_allcellcs[:, None], old_allcellcs[None, :]] = old_all_data
+    print(old_allcoarray)
+    return old_allcoarray, old_allNames
+
+def hm_tar(coarray, tarNames):
+    used_tar_cells = np.where(~np.isnan(coarray).all(axis=(0, 1)))[0]
+    used_tar_names = tarNames[used_tar_cells]
+    used_tar_coarray = coarray[:, used_tar_cells[:, None], used_tar_cells[None, :]]
+    cor_tar_mean = np.nanmean(used_tar_coarray, axis=0).squeeze()
+    ### 沿第一纬度计算平均值（即样本间），squeeze删除第一维度
+
+    ## correlation map
+    hm_cor_tar_mean = sns.clustermap(cor_tar_mean, xticklabels=used_tar_names, yticklabels=used_tar_names,
+                                     col_cluster=False, row_cluster=False, cmap='jet', vmin=-1, vmax=1,
+                                     cbar_pos=(0.1, 0.595, 0.03, 0.2))
+    return hm_cor_tar_mean
+
+
+def hm_all(allcoarray, allNames):
+    used_cells = np.where(~np.isnan(allcoarray).all(axis=(0, 1)))[0]
+    used_names = allNames[used_cells]
+    used_coarray = allcoarray[:, used_cells[:, None], used_cells[None, :]]
+    cor_mean = np.nanmean(used_coarray, axis=0).squeeze()
+    ### 在所有sample中只出现一次的neuron也包括，但可能不存在相应的cor,即cor_mean中会出现NaN
+
+    temp_cor_mean = np.nan_to_num(cor_mean)  ## 处理nan,暂变为0，以便聚类
+    Y = pdist(temp_cor_mean)
+    Z = linkage(Y)
+    Z_tree = optimal_leaf_ordering(Z, Y)
+    Z_index = leaves_list(Z_tree)
+    cor_mean_ordered = cor_mean[Z_index][:, Z_index]
+    used_names_ordered = used_names[Z_index]
+
+    ## correlation map
+    sns.set(font_scale=0.8)
+    hm_cor_mean = sns.clustermap(cor_mean_ordered, xticklabels=True, yticklabels=True, col_cluster=False,
+                                 row_cluster=False, cmap='jet', vmin=-1, vmax=1, cbar_pos=(0.02, 0.79, 0.03, 0.2),
+                                 figsize=(6.7, 7))
+    return hm_cor_mean, used_names_ordered
 
 
 
 
+### statistic diff: U-tset
+def ranksum(A, B):
+    n = A.shape[1]
+    statistic = np.empty((n,))
+    p_value = np.empty((n,))
+    for i in range(A.shape[1]):
+        va = A[:, i][~np.isnan(A[:, i])]
+        vb = B[:, i][~np.isnan(B[:, i])]
+        stat, p = ranksums(va, vb, 'two-sided')
+        statistic[i] = stat
+        p_value[i] = p
+    return p_value, statistic

@@ -5,12 +5,11 @@ import seaborn as sns
 import numpy as np
 import re
 
-ch1_p = r"230512-9DA-W1-ch1.csv"
-ch2_p = r"230512-9DA-W1-ch2.csv"
+# ch1_p = r"230512-9DA-W1-ch1.csv"
+# ch2_p = r"230512-9DA-W1-ch2.csv"
 
-# ch1_p = r"230102-W3-ch1.csv"
-# ch2_p = r"230102-W3-ch2.csv"
-
+ch1_p = r"230102-W3-ch1.csv"
+ch2_p = r"230102-W3-ch2.csv"
 # generate normalized mat
 y1 = zpr.main(ch1_p, ch2_p)
 
@@ -55,20 +54,69 @@ pd.DataFrame(name_anno_y1).to_csv("name_sample3.csv")
 pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
 
 
-# select most dynamic neurons
-y1_dy = zpr.select(y1_anno, 60)        ## n = ?
-dy_y1, dy_hm_y1 = zpr.cluster(y1_dy)   ## 可选False
-co_eff_dy_y1 = np.corrcoef(y1_dy.T)
-co_dy_y1 = sns.clustermap(co_eff_dy_y1, xticklabels=True, yticklabels=True, cmap='jet', vmin=-1, vmax=1, figsize=(10, 6.5))
-### labels
-co_dy_ylabels = y1_dy.index[co_dy_y1.dendrogram_row.reordered_ind]
-co_dy_y1_names = y1_dy.iloc[:, co_dy_ylabels].columns.values
-co_dy_y1.ax_heatmap.set_yticklabels(co_dy_y1_names)
-co_dy_y1.ax_heatmap.set_xticklabels(co_dy_y1_names)
-pd.DataFrame(co_dy_y1_names).to_csv("dy_name_sample6.csv")
-pd.DataFrame(co_eff_dy_y1).to_csv("dy_cor_sample6.csv")
+# # select most dynamic neurons
+# y1_dy = zpr.select(y1_anno, 60)        ## n = ?
+# dy_y1, dy_hm_y1 = zpr.cluster(y1_dy)   ## 可选False
+# co_eff_dy_y1 = np.corrcoef(y1_dy.T)
+# co_dy_y1 = sns.clustermap(co_eff_dy_y1, xticklabels=True, yticklabels=True, cmap='jet', vmin=-1, vmax=1, figsize=(10, 6.5))
+# ### labels
+# co_dy_ylabels = y1_dy.index[co_dy_y1.dendrogram_row.reordered_ind]
+# co_dy_y1_names = y1_dy.iloc[:, co_dy_ylabels].columns.values
+# co_dy_y1.ax_heatmap.set_yticklabels(co_dy_y1_names)
+# co_dy_y1.ax_heatmap.set_xticklabels(co_dy_y1_names)
+# pd.DataFrame(co_dy_y1_names).to_csv("dy_name_sample6.csv")
+# pd.DataFrame(co_eff_dy_y1).to_csv("dy_cor_sample6.csv")
 
 
 zpr.histplot(co_eff_y1, label='0102-1DA-W3')
 plt.legend()
 plt.show()
+
+
+
+## young, tar
+tar = pd.read_csv(r"D:/Connectivity/metadata/targetneurons.csv")
+coarray, tarNames = zpr.young_mean_tar(tar)
+hm_young_tar = zpr.hm_tar(coarray, tarNames)
+
+## old, tar
+old_tar = pd.read_csv(r"D:/Connectivity/metadata/targetneurons.csv")
+old_coarray, old_tarNames = zpr.old_mean_tar(old_tar)
+hm_old_cor_tar = zpr.hm_tar(old_coarray, old_tarNames)
+
+pd.DataFrame(old_coarray).to_csv("9DA-mean_old_tar_cor.csv")
+pd.DataFrame(coarray).to_csv("1DA-mean_tar_cor.csv")
+
+
+## young, all
+all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
+allcoarray, allNames = zpr.young_mean(all)
+
+hm_young_all, used_names_ordered = zpr.hm_all(allcoarray, allNames)
+used_xnames = used_names_ordered.copy()
+used_ynames = zpr.re_name_mean(used_names_ordered)
+hm_young_all.ax_heatmap.set_yticklabels(used_ynames)
+hm_young_all.ax_heatmap.set_xticklabels(used_xnames)
+
+## old, all
+old_all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
+old_allcoarray, old_allNames = zpr.old_mean(old_all)
+
+hm_old_all, old_used_names_ordered = zpr.hm_all(old_allcoarray, old_allNames)
+old_used_xnames = old_used_names_ordered.copy()
+old_used_ynames = zpr.re_name_mean(old_used_names_ordered)
+hm_old_all.ax_heatmap.set_yticklabels(old_used_ynames)
+hm_old_all.ax_heatmap.set_xticklabels(old_used_xnames)
+
+
+
+### U-test: young: 8, old: 7;    for n:  target:16;  all: 232
+young = allcoarray.reshape((8, -1))
+old = old_allcoarray.reshape((7, -1))
+p2, sta2 = zpr.ranksum(young, old)
+p3 = p2.reshape(16, 16)
+sta3 = sta2.reshape(16, 16)
+p = np.tril(p3)
+sta = np.tril(sta3)
+
+pd.DataFrame(p).to_csv("p_u-test.csv")
