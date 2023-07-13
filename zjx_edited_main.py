@@ -113,47 +113,43 @@ hm_old_all.ax_heatmap.set_xticklabels(old_used_xnames)
 
 
 ### U-test: young: 8, old: 7;    for n:  target:16;  all: 232
-young = allcoarray.reshape((8, -1))
-old = old_allcoarray.reshape((7, -1))
-p2, sta2 = zpr.ranksum(young, old)
-p3 = p2.reshape(16, 16)
-sta3 = sta2.reshape(16, 16)
+Young = allcoarray.reshape((8, -1))
+Old = old_allcoarray.reshape((7, -1))
+p2, sta2 = zpr.ranksum(Young, Old)
+p3 = p2.reshape(232, 232)
+sta3 = sta2.reshape(232, 232)
 p = np.tril(p3, k=-1)
 sta = np.tril(sta3, k=-1)
 
-pd.DataFrame(p).to_csv("p_u-test.csv")
+pd.DataFrame(p).to_csv("P_tar.csv")
 
 
 
 ############# visualization ###########################
 young = r"1DA-mean_tar_cor.csv"
 old = r"9DA-mean_tar_cor.csv"
-p_tar = r"P_tar.csv"
 names = r"1DA-mean_tar_names.csv"
 # young = r"1DA_cor.csv"
 # old = r"9DA_cor.csv"
-# p_tar = r"P_all.csv"
 # names = r"1DA_names.csv"
 
 y = pd.read_csv(young, index_col=0)
 o = pd.read_csv(old, index_col=0)
-p = pd.read_csv(p_tar, index_col=0)
 n = pd.read_csv(names, index_col=0)        ## dataframe
 ov = o.values                              ## array
 yv = y.values
-pv = p.values
 ind = np.where((p < 0.05) & (p != 0))
 # ind = np.where((p < 0.05) & (p != 0) & (p > 0.01))
 y2 = yv[ind]
 o2 = ov[ind]
-p2 = pv[ind]
-aster = zpr.p2a(p2)
+p4 = p[ind]
+aster = zpr.p2a(p4)
 
 ind2 = np.where((p < 0.01) & (p != 0))
 y3 = yv[ind2]
 o3 = ov[ind2]
-p3 = pv[ind2]
-aster2 = zpr.p2a(p3)
+p4 = p[ind2]
+aster2 = zpr.p2a(p4)
 
 
 row = n.T[ind[0]]
@@ -172,6 +168,10 @@ name2 = name.tolist()
 name3 = ','.join(str(i) for i in name2)
 name4 = name3.split(",")
 
+# pd.DataFrame(name).to_csv("p_one-aster_name.csv")
+
+
+### for all and **, y2--y3; o2--o3
 x = np.arange(len(y2))
 width = 0.25
 plt.figure(figsize=(8, 6))
@@ -183,6 +183,7 @@ plt.ylabel("value", fontsize=18)
 plt.xticks(x, name4, rotation=45, fontsize=11)
 # plt.xticks(x, name4, rotation=90, fontsize=7)
 plt.legend(fontsize=14)
+
 for xi, oi, val in zip(x, o2, aster):
     plt.text(xi, oi, str(val), ha='right', va='bottom', fontsize=14)
 plt.show()
