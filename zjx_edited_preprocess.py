@@ -430,3 +430,17 @@ def ranksum(A, B):
         statistic[i] = stat
         p_value[i] = p
     return p_value, statistic
+
+
+def p2a(p_value):
+    aster = []
+    for i in range(len(p_value)):
+        if p_value[i] < 0.0001:
+            aster.append('****')
+        elif p_value[i] < 0.001:
+            aster.append('***')
+        elif p_value[i] < 0.01:
+            aster.append('**')
+        else:
+            aster.append('*')
+    return aster
