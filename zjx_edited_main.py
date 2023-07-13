@@ -77,12 +77,21 @@ plt.show()
 ## young, tar
 tar = pd.read_csv(r"D:/Connectivity/metadata/targetneurons.csv")
 coarray, tarNames = zpr.young_mean_tar(tar)
-hm_young_tar = zpr.hm_tar(coarray, tarNames)
+hm_young_tar, cor_tar = zpr.hm_tar(coarray, tarNames)
 
 ## old, tar
 old_tar = pd.read_csv(r"D:/Connectivity/metadata/targetneurons.csv")
 old_coarray, old_tarNames = zpr.old_mean_tar(old_tar)
-hm_old_cor_tar = zpr.hm_tar(old_coarray, old_tarNames)
+hm_old_cor_tar, old_cor_tar = zpr.hm_tar(old_coarray, old_tarNames)
+
+
+zpr.histplot(cor_tar, label='1DA-target')
+zpr.histplot(old_cor_tar, label='9DA-target')
+plt.ylabel('Probability', fontsize=18)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.legend(fontsize=15)
+plt.show()
 
 pd.DataFrame(old_coarray).to_csv("9DA-mean_old_tar_cor.csv")
 pd.DataFrame(coarray).to_csv("1DA-mean_tar_cor.csv")
@@ -109,6 +118,15 @@ old_used_xnames = old_used_names_ordered.copy()
 old_used_ynames = zpr.re_name_mean(old_used_names_ordered)
 hm_old_all.ax_heatmap.set_yticklabels(old_used_ynames)
 hm_old_all.ax_heatmap.set_xticklabels(old_used_xnames)
+
+
+zpr.histplot(cor, label='1DA')
+zpr.histplot(old_cor, label='9DA')
+plt.ylabel('Probability', fontsize=18)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.legend(fontsize=15)
+plt.show()
 
 
 
@@ -158,7 +176,7 @@ row2 = row.values
 col2 = col.values
 col3 = col2.copy()
 for i in range(len(col2)):
-    col3[i] = '—' + col2[i]
+    col3[i] = '-' + col2[i]
 print(col3)
 
 name = row2.copy()
