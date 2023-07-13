@@ -235,14 +235,12 @@ def re_name_mean(name_list):  ## 一维
     return re_name
 
 
-### 概率分布直方图，第一行转为一维数组，第二行去除重复值（三角对称），第三行 n!=0(n不为0的被保留）
+### 概率分布直方图
 def histplot(data, label):
-    dt = data.flatten()
-    dt = set(dt)
-    dt = [n for n in dt if n != 0]
-    sns.histplot(dt, stat='probability', label=label)
-
-#  dt = [n for n in dt if n != 0 and n != 1]
+    dt = np.tril(data, k=-1)
+    dt2 = dt.flatten()
+    dt3 = [n for n in dt2 if n != 0]
+    sns.histplot(dt3, stat='probability', label=label, binrange=(-1, 1), binwidth=0.02)
 
 ######### mean for target and all neurons in young and old worms ######
 ### young, target:
@@ -390,7 +388,7 @@ def hm_tar(coarray, tarNames):
     hm_cor_tar_mean = sns.clustermap(cor_tar_mean, xticklabels=used_tar_names, yticklabels=used_tar_names,
                                      col_cluster=False, row_cluster=False, cmap='jet', vmin=-1, vmax=1,
                                      cbar_pos=(0.1, 0.595, 0.03, 0.2))
-    return hm_cor_tar_mean
+    return hm_cor_tar_mean, cor_tar_mean
 
 
 def hm_all(allcoarray, allNames):
