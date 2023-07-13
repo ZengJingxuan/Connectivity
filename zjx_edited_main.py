@@ -90,7 +90,8 @@ pd.DataFrame(coarray).to_csv("1DA-mean_tar_cor.csv")
 
 ## young, all
 all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
-allcoarray, allNames = zpr.young_mean(all)
+allcoarray, allNames = zpr.young_mean(all)         ### 3d all (for p_value)
+cor = np.nanmean(allcoarray, axis=0).squeeze()     ### 2d all (for csv and diff)
 
 hm_young_all, used_names_ordered = zpr.hm_all(allcoarray, allNames)
 used_xnames = used_names_ordered.copy()
@@ -100,7 +101,8 @@ hm_young_all.ax_heatmap.set_xticklabels(used_xnames)
 
 ## old, all
 old_all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
-old_allcoarray, old_allNames = zpr.old_mean(old_all)
+old_allcoarray, old_allNames = zpr.old_mean(old_all)     ### 3d all (for p_value)
+old_cor = np.nanmean(old_allcoarray, axis=0).squeeze()   ### 2d all (for csv and diff)
 
 hm_old_all, old_used_names_ordered = zpr.hm_all(old_allcoarray, old_allNames)
 old_used_xnames = old_used_names_ordered.copy()
@@ -116,7 +118,71 @@ old = old_allcoarray.reshape((7, -1))
 p2, sta2 = zpr.ranksum(young, old)
 p3 = p2.reshape(16, 16)
 sta3 = sta2.reshape(16, 16)
-p = np.tril(p3)
-sta = np.tril(sta3)
+p = np.tril(p3, k=-1)
+sta = np.tril(sta3, k=-1)
 
 pd.DataFrame(p).to_csv("p_u-test.csv")
+
+
+
+############# visualization ###########################
+young = r"1DA-mean_tar_cor.csv"
+old = r"9DA-mean_tar_cor.csv"
+p_tar = r"P_tar.csv"
+names = r"1DA-mean_tar_names.csv"
+# young = r"1DA_cor.csv"
+# old = r"9DA_cor.csv"
+# p_tar = r"P_all.csv"
+# names = r"1DA_names.csv"
+
+y = pd.read_csv(young, index_col=0)
+o = pd.read_csv(old, index_col=0)
+p = pd.read_csv(p_tar, index_col=0)
+n = pd.read_csv(names, index_col=0)        ## dataframe
+ov = o.values                              ## array
+yv = y.values
+pv = p.values
+ind = np.where((p < 0.05) & (p != 0))
+# ind = np.where((p < 0.05) & (p != 0) & (p > 0.01))
+y2 = yv[ind]
+o2 = ov[ind]
+p2 = pv[ind]
+aster = zpr.p2a(p2)
+
+ind2 = np.where((p < 0.01) & (p != 0))
+y3 = yv[ind2]
+o3 = ov[ind2]
+p3 = pv[ind2]
+aster2 = zpr.p2a(p3)
+
+
+row = n.T[ind[0]]
+col = n.T[ind[1]]
+row2 = row.values
+col2 = col.values
+col3 = col2.copy()
+for i in range(len(col2)):
+    col3[i] = '—' + col2[i]
+print(col3)
+
+name = row2.copy()
+for i in range(len(row2)):
+    name[i] = row2[i] + col3[i]
+name2 = name.tolist()
+name3 = ','.join(str(i) for i in name2)
+name4 = name3.split(",")
+
+x = np.arange(len(y2))
+width = 0.25
+plt.figure(figsize=(8, 6))
+rect_y = plt.bar(x - width/2, y2, width, label='young')
+rect_o = plt.bar(x + width/2, o2, width, label='old')
+
+plt.grid(axis='y', alpha=0.3)
+plt.ylabel("value", fontsize=18)
+plt.xticks(x, name4, rotation=45, fontsize=11)
+# plt.xticks(x, name4, rotation=90, fontsize=7)
+plt.legend(fontsize=14)
+for xi, oi, val in zip(x, o2, aster):
+    plt.text(xi, oi, str(val), ha='right', va='bottom', fontsize=14)
+plt.show()
