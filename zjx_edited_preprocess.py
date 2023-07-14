@@ -11,6 +11,7 @@ from scipy.spatial.distance import pdist
 import math
 from scipy.stats import ranksums
 import os
+from skimage.filters import threshold_otsu
 
 
 # for check plots
@@ -442,3 +443,11 @@ def p2a(p_value):
         else:
             aster.append('*')
     return aster
+
+
+def thresh(data):
+    thresh = []
+    for i in range(len(data[1])):
+        thresh.append(threshold_otsu(data[:, i]))
+        thresh = np.array(thresh)
+    return thresh
