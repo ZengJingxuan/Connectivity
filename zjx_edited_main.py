@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import re
+from scipy.stats import kstest
+from statsmodels.stats.multitest import multipletests
 
 # ch1_p = r"230512-9DA-W1-ch1.csv"
 # ch2_p = r"230512-9DA-W1-ch2.csv"
@@ -100,7 +102,7 @@ pd.DataFrame(coarray).to_csv("1DA-mean_tar_cor.csv")
 ## young, all
 all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
 allcoarray, allNames = zpr.young_mean(all)         ### 3d all (for p_value)
-cor = np.nanmean(allcoarray, axis=0).squeeze()     ### 2d all (for csv and diff)
+cor = np.nanmean(allcoarray, axis=0).squeeze()     ### 2d all (for save csv, diff and histplot)
 
 hm_young_all, used_names_ordered = zpr.hm_all(allcoarray, allNames)
 used_xnames = used_names_ordered.copy()
@@ -111,7 +113,7 @@ hm_young_all.ax_heatmap.set_xticklabels(used_xnames)
 ## old, all
 old_all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
 old_allcoarray, old_allNames = zpr.old_mean(old_all)     ### 3d all (for p_value)
-old_cor = np.nanmean(old_allcoarray, axis=0).squeeze()   ### 2d all (for csv and diff)
+old_cor = np.nanmean(old_allcoarray, axis=0).squeeze()   ### 2d all (for save csv, diff and histplot)
 
 hm_old_all, old_used_names_ordered = zpr.hm_all(old_allcoarray, old_allNames)
 old_used_xnames = old_used_names_ordered.copy()
@@ -128,9 +130,29 @@ plt.yticks(fontsize=14)
 plt.legend(fontsize=15)
 plt.show()
 
+###########   k-s test for correlation distribution, cor: 2D    ###################
+cor_tar1 = np.tril(cor_tar)
+cor_tar2 = [n for n in cor_tar1.flatten() if n != 0]
+cor_tar3 = np.array(cor_tar2)
+old_cor_tar1 = np.tril(old_cor_tar)
+old_cor_tar2 = [n for n in old_cor_tar1.flatten() if n != 0]
+old_cor_tar3 = np.array(old_cor_tar2)
+d, p4d = kstest(cor_tar3, old_cor_tar3, 'two-sided')
+##  too many p,   p4d: p value for distance
+
+#######  for all
+# cor1 = np.tril(cor)
+# cor2 = [n for n in cor1.flatten() if n != 0]
+# cor3 = np.array(cor2)
+# old_cor1 = np.tril(old_cor)
+# old_cor2 = [n for n in old_cor1.flatten() if n != 0]
+# old_cor3 = np.array(old_cor2)
+# d, p4d = kstest(cor3, old_cor3, 'two-sided')
 
 
-### U-test: young: 8, old: 7;    for n:  target:16;  all: 232
+
+
+### U-test,  allcoarray: 3D     young: 8, old: 7;    for n:  target:16;  all: 232
 Young = allcoarray.reshape((8, -1))
 Old = old_allcoarray.reshape((7, -1))
 p2, sta2 = zpr.ranksum(Young, Old)
@@ -138,6 +160,11 @@ p3 = p2.reshape(232, 232)
 sta3 = sta2.reshape(232, 232)
 p = np.tril(p3, k=-1)
 sta = np.tril(sta3, k=-1)
+
+# p5 = p.flatten()
+# p6 = [n for n in p5 if n != 0]
+# p7 = np.array(p6)
+# reject, adjusted_p, _, _ = multipletests(p7, 0.05, method='fdr_bh')
 
 pd.DataFrame(p).to_csv("P_tar.csv")
 
@@ -156,6 +183,11 @@ o = pd.read_csv(old, index_col=0)
 n = pd.read_csv(names, index_col=0)        ## dataframe
 ov = o.values                              ## array
 yv = y.values
+nv = n.values
+##########   P map,  only tril   ################
+mask = np.triu(np.ones_like(p3), k=1)
+hm_p = sns.heatmap(p3, xticklabels=nv, yticklabels=nv, vmin=0, vmax=1, cmap='RdBu', annot=True, mask=mask)
+###
 ind = np.where((p < 0.05) & (p != 0))
 # ind = np.where((p < 0.05) & (p != 0) & (p > 0.01))
 y2 = yv[ind]
@@ -169,7 +201,7 @@ o3 = ov[ind2]
 p4 = p[ind2]
 aster2 = zpr.p2a(p4)
 
-
+##  ind2 if choose **
 row = n.T[ind[0]]
 col = n.T[ind[1]]
 row2 = row.values
@@ -186,10 +218,21 @@ name2 = name.tolist()
 name3 = ','.join(str(i) for i in name2)
 name4 = name3.split(",")
 
+#####  one * heatmap, 84 neural pairs
+p5 = p4.reshape(7, 12)
+name5 = np.array(name4)
+name6 = name5.reshape(7, 12)
+hm = sns.heatmap(p5, vmin=0.001, vmax=0.01, cmap='RdBu', annot=True, linewidth=0.6)
+for i in range(name6.shape[0]):
+    for j in range(name6.shape[1]):
+        text = name6[i][j] # 自定义的文本内容
+        hm.text(j+0.45, i+0.35, text, ha='center', va='center', fontsize=9)
+
+
 # pd.DataFrame(name).to_csv("p_one-aster_name.csv")
 
 
-### for all and **, y2--y3; o2--o3
+### for all and **, variable names change:  y2--y3; o2--o3
 x = np.arange(len(y2))
 width = 0.25
 plt.figure(figsize=(8, 6))
