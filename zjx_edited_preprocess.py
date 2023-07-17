@@ -12,6 +12,8 @@ import math
 from scipy.stats import ranksums
 import os
 from skimage.filters import threshold_otsu
+from scipy.stats import ttest_ind
+
 
 
 # for check plots
@@ -146,13 +148,13 @@ def main(ch1_p,ch2_p):
     fret = pd.DataFrame(fret_hm_nm, columns=name[~flag_outliers])
     return fret
 
-### select dynamic neurons   mat = norm(time x neuron)
-def select(fret, n):
-    ind = list(fret.var().sort_values()[-n:].index)
-    mat = pd.DataFrame()
-    for i in ind:
-        mat = pd.concat([mat, fret[i]], axis=1)
-    return mat
+# ### select dynamic neurons   mat = norm(time x neuron)
+# def select(fret, n):
+#     ind = list(fret.var().sort_values()[-n:].index)
+#     mat = pd.DataFrame()
+#     for i in ind:
+#         mat = pd.concat([mat, fret[i]], axis=1)
+#     return mat
 
 ### select target neurons
 def select_tar(ch1_p, ch2_p, arr):
@@ -417,7 +419,7 @@ def hm_all(allcoarray, allNames):
 
 
 
-### statistic diff: U-tset
+### statistic difference: U-tset
 def ranksum(A, B):
     n = A.shape[1]
     statistic = np.empty((n,))
@@ -428,7 +430,7 @@ def ranksum(A, B):
         stat, p = ranksums(va, vb, 'two-sided')
         statistic[i] = stat
         p_value[i] = p
-    return p_value, statistic
+    return statistic, p_value
 
 
 def p2a(p_value):
@@ -445,9 +447,109 @@ def p2a(p_value):
     return aster
 
 
-def thresh(data):
-    thresh = []
+#####  compare to threshold, data: after smooth #######
+def comp2thr(data):
+    def threshold(data):
+        thr = []
+        for i in range(len(data[1])):
+            thr.append(threshold_otsu(data[:, i]))
+        return thr
+    cross = []
+    time = []
+    thr = threshold(data)
     for i in range(len(data[1])):
-        thresh.append(threshold_otsu(data[:, i]))
-        thresh = np.array(thresh)
-    return thresh
+        cross2 = []
+        for j in range(len(data[0])-1):
+            crossing = np.nonzero(np.atleast_1d((data[j, i] - thr[i]) * (data[j + 1, i] - thr[i]) < 0))[0]
+            if len(crossing) > 0:
+                for c in crossing:
+                    cross2.append((j, i))
+        time.append(len(cross2))
+        times = np.array(time)
+        cross.append(cross2)
+    thresh = np.array(thr)
+    return thresh, times, cross
+
+
+
+############     count times for changed states (compare to threshold)
+def young_times(all):
+    N = all.iloc[:, 1]
+    Names = np.array(N)
+    M = len(Names)
+    samples = list(range(1, 9))
+    n_samples = len(samples)
+
+    alltimes = np.zeros((n_samples, M))
+    alltimes[:, :] = np.nan  ##  三维数组
+    folder_path = 'D:/Connectivity/metadata_states'
+
+    for samplei in range(n_samples):
+        file = 'times_sample' + str(samplei) + '.csv'
+        name = 'name_sample' + str(samplei) + '.csv'
+        file_path = os.path.join(folder_path, file)
+        name_path = os.path.join(folder_path, name)
+        with open(file_path, 'r') as times:
+            data = pd.read_csv(times, index_col=0, header=None, skiprows=1)  ##  dataframe
+        data = data.to_numpy()
+        with open(name_path, 'r') as Name:
+            uniqName = pd.read_csv(Name, header=None, skiprows=1, usecols=[1])
+        uniqName = np.array(uniqName)
+        Mu = len(uniqName)
+        cellcs = np.empty(Mu)
+        cellcs = np.array(list(map(np.int_, cellcs)))
+        for celli in range(Mu):
+            indices = np.where(Names == uniqName[celli])[0]
+            if len(indices) > 0:
+                cellcs[celli] = indices[0]
+        alltimes[samplei, cellcs[:, None]] = data
+    print(alltimes)
+    return alltimes
+
+
+def old_times(all):
+    N = all.iloc[:, 1]
+    Names = np.array(N)
+    M = len(Names)
+    samples = list(range(1, 8))
+    n_samples = len(samples)
+
+    alltimes = np.zeros((n_samples, M))
+    alltimes[:, :] = np.nan  ##  三维数组
+    folder_path = 'D:/Connectivity/metadata_states'
+
+    for samplei in range(n_samples):
+        file = 'old_times_sample' + str(samplei) + '.csv'
+        name = 'old_name_sample' + str(samplei) + '.csv'
+        file_path = os.path.join(folder_path, file)
+        name_path = os.path.join(folder_path, name)
+        with open(file_path, 'r') as times:
+            data = pd.read_csv(times, index_col=0, header=None, skiprows=1)  ##  dataframe
+        data = data.to_numpy()
+        with open(name_path, 'r') as Name:
+            uniqName = pd.read_csv(Name, header=None, skiprows=1, usecols=[1])
+        uniqName = np.array(uniqName)
+        Mu = len(uniqName)
+        cellcs = np.empty(Mu)
+        cellcs = np.array(list(map(np.int_, cellcs)))
+        for celli in range(Mu):
+            indices = np.where(Names == uniqName[celli])[0]
+            if len(indices) > 0:
+                cellcs[celli] = indices[0]
+        alltimes[samplei, cellcs[:, None]] = data
+    print(alltimes)
+    return alltimes
+
+
+#######    t-test for changed states in 1DA and 9DA   ##############
+def ttest(A, B):
+    n = A.shape[1]
+    statistic = np.empty((n,))
+    p_value = np.empty((n,))
+    for i in range(len(A[1])):
+        va = A[:, i][~np.isnan(A[:, i])]
+        vb = B[:, i][~np.isnan(B[:, i])]
+        stat, p = ttest_ind(va, vb)
+        statistic[i] = stat
+        p_value[i] = p
+    return statistic, p_value
