@@ -5,15 +5,18 @@ import seaborn as sns
 import numpy as np
 import re
 from scipy.stats import kstest
+from scipy.signal import savgol_filter
 from statsmodels.stats.multitest import multipletests
 
-# ch1_p = r"230512-9DA-W1-ch1.csv"
-# ch2_p = r"230512-9DA-W1-ch2.csv"
+
+# ch1_p = r"230421-9DA-W1-ch1.csv"
+# ch2_p = r"230421-9DA-W1-ch2.csv"
 
 ch1_p = r"230102-W3-ch1.csv"
 ch2_p = r"230102-W3-ch2.csv"
 # generate normalized mat
 y1 = zpr.main(ch1_p, ch2_p)
+
 
 # select target neurons
 y1_tar = zpr.select_tar(ch1_p, ch2_p, y1)
@@ -46,35 +49,64 @@ co_y1.ax_heatmap.set_yticklabels(co_y1_ynames)
 co_y1.ax_heatmap.set_xticklabels(co_y1_xnames)
 ## values for correlation map
 
+zpr.histplot(co_eff_y1, label='0102-1DA-W3')
+plt.legend()
+plt.show()
+
 # only save annotated neurons
-y1_all_names = ordered_y1.columns.values.tolist()
+y1_all_names = y1.columns.values.tolist()
 y1_anno_names = [name for name in y1_all_names if re.match(r'^[A-Za-z]', name)]
-y1_anno = ordered_y1[y1_anno_names]
+y1_anno = y1[y1_anno_names]
 name_anno_y1 = y1_anno.columns.values
 co_anno_y1 = np.corrcoef(y1_anno.T)
 pd.DataFrame(name_anno_y1).to_csv("name_sample3.csv")
 pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
 
 
-# # select most dynamic neurons
-# y1_dy = zpr.select(y1_anno, 60)        ## n = ?
-# dy_y1, dy_hm_y1 = zpr.cluster(y1_dy)   ## 可选False
-# co_eff_dy_y1 = np.corrcoef(y1_dy.T)
-# co_dy_y1 = sns.clustermap(co_eff_dy_y1, xticklabels=True, yticklabels=True, cmap='jet', vmin=-1, vmax=1, figsize=(10, 6.5))
-# ### labels
-# co_dy_ylabels = y1_dy.index[co_dy_y1.dendrogram_row.reordered_ind]
-# co_dy_y1_names = y1_dy.iloc[:, co_dy_ylabels].columns.values
-# co_dy_y1.ax_heatmap.set_yticklabels(co_dy_y1_names)
-# co_dy_y1.ax_heatmap.set_xticklabels(co_dy_y1_names)
-# pd.DataFrame(co_dy_y1_names).to_csv("dy_name_sample6.csv")
-# pd.DataFrame(co_eff_dy_y1).to_csv("dy_cor_sample6.csv")
+#######  smooth, count times, t-test, multipletest ######
+y1_smooth = savgol_filter(y1_anno, 5, 2, axis=0)
+thresh, times, cross = zpr.comp2thr(y1_smooth)
+pd.DataFrame(name_anno_y1).to_csv("old_name_sample2.csv")
+pd.DataFrame(times).to_csv("old_times_sample2.csv")
 
+all = pd.read_csv(r"D:/Connectivity/metadata_states/allneurons.csv")
+times = zpr.young_times(all)
+old_times = zpr.old_times(all)
 
-zpr.histplot(co_eff_y1, label='0102-1DA-W3')
-plt.legend()
+sta_t, p_t = zpr.ttest(times, old_times)
+# reject, adjusted_p, _, _ = multipletests(p_t, 0.05, method='fdr_bh')
+used_times = np.nanmean(times, axis=0).squeeze()
+old_used_times = np.nanmean(old_times, axis=0).squeeze()
+ind_t = np.where((p_t < 0.05) & (p_t != 0))
+times2 = used_times[ind_t]
+old_times2 = old_used_times[ind_t]
+p_t2 = p_t[ind_t]
+aster_t = zpr.p2a(p_t2)
+
+N = all.values
+NN = N[:, 1]
+Name = NN.T[ind_t[0]]
+###
+X = np.arange(len(times2))
+width = 0.25
+plt.figure(figsize=(8, 6))
+rect_Y = plt.bar(X - width/2, times2, width, label='young')
+rect_O = plt.bar(X + width/2, old_times2, width, label='old')
+
+plt.grid(axis='y', alpha=0.3)
+plt.ylabel("times", fontsize=18)
+plt.xticks(X, Name, rotation=45, fontsize=11)
+plt.legend(fontsize=14)
+
+for xi, oi, val in zip(X, old_times2, aster_t):
+    plt.text(xi+0.17, oi, str(val), ha='right', va='bottom', fontsize=14)
 plt.show()
 
 
+
+
+
+################   mean for neural pairs correlation arcoss samples  ###################
 
 ## young, tar
 tar = pd.read_csv(r"D:/Connectivity/metadata/targetneurons.csv")
@@ -129,33 +161,40 @@ plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
 plt.legend(fontsize=15)
 plt.show()
+###################################################################################
+
+
+
 
 ###########   k-s test for correlation distribution, cor: 2D    ###################
-cor_tar1 = np.tril(cor_tar)
-cor_tar2 = [n for n in cor_tar1.flatten() if n != 0]
-cor_tar3 = np.array(cor_tar2)
-old_cor_tar1 = np.tril(old_cor_tar)
-old_cor_tar2 = [n for n in old_cor_tar1.flatten() if n != 0]
-old_cor_tar3 = np.array(old_cor_tar2)
-d, p4d = kstest(cor_tar3, old_cor_tar3, 'two-sided')
-##  too many p,   p4d: p value for distance
+### for all
+cor1 = np.tril(cor)
+cor2 = [n for n in cor1.flatten() if n != 0]
+cor3 = np.array(cor2)
+old_cor1 = np.tril(old_cor)
+old_cor2 = [n for n in old_cor1.flatten() if n != 0]
+old_cor3 = np.array(old_cor2)
+d, p4d = kstest(cor3, old_cor3, 'two-sided')
+##  too many varibles p,   p4d: p value for distance
 
-#######  for all
-# cor1 = np.tril(cor)
-# cor2 = [n for n in cor1.flatten() if n != 0]
-# cor3 = np.array(cor2)
-# old_cor1 = np.tril(old_cor)
-# old_cor2 = [n for n in old_cor1.flatten() if n != 0]
-# old_cor3 = np.array(old_cor2)
-# d, p4d = kstest(cor3, old_cor3, 'two-sided')
+### for target
+# cor_tar1 = np.tril(cor_tar)
+# cor_tar2 = [n for n in cor_tar1.flatten() if n != 0]
+# cor_tar3 = np.array(cor_tar2)
+# old_cor_tar1 = np.tril(old_cor_tar)
+# old_cor_tar2 = [n for n in old_cor_tar1.flatten() if n != 0]
+# old_cor_tar3 = np.array(old_cor_tar2)
+# d, p4d = kstest(cor_tar3, old_cor_tar3, 'two-sided')
+##  too many varibles p,   p4d: p value for distance
 
 
 
 
-### U-test,  allcoarray: 3D     young: 8, old: 7;    for n:  target:16;  all: 232
+
+### U-test,  allcoarray: 3D     young: 8, old: 7;    for n:  target:16;  all: 232  ##############
 Young = allcoarray.reshape((8, -1))
 Old = old_allcoarray.reshape((7, -1))
-p2, sta2 = zpr.ranksum(Young, Old)
+sta2, p2 = zpr.ranksum(Young, Old)
 p3 = p2.reshape(232, 232)
 sta3 = sta2.reshape(232, 232)
 p = np.tril(p3, k=-1)
@@ -184,10 +223,10 @@ n = pd.read_csv(names, index_col=0)        ## dataframe
 ov = o.values                              ## array
 yv = y.values
 nv = n.values
-##########   P map,  only tril   ################
+##########   p-value heatmap,  only tril, better for target neurons  ################
 mask = np.triu(np.ones_like(p3), k=1)
 hm_p = sns.heatmap(p3, xticklabels=nv, yticklabels=nv, vmin=0, vmax=1, cmap='RdBu', annot=True, mask=mask)
-###
+#########
 ind = np.where((p < 0.05) & (p != 0))
 # ind = np.where((p < 0.05) & (p != 0) & (p > 0.01))
 y2 = yv[ind]
