@@ -402,19 +402,24 @@ def hm_all(allcoarray, allNames):
     ### 在所有sample中只出现一次的neuron也包括，但可能不存在相应的cor,即cor_mean中会出现NaN
 
     temp_cor_mean = np.nan_to_num(cor_mean)  ## 处理nan,暂变为0，以便聚类
-    Y = pdist(temp_cor_mean)
-    Z = linkage(Y)
-    Z_tree = optimal_leaf_ordering(Z, Y)
-    Z_index = leaves_list(Z_tree)
-    cor_mean_ordered = cor_mean[Z_index][:, Z_index]
-    used_names_ordered = used_names[Z_index]
+    # Y = pdist(temp_cor_mean)
+    # Z = linkage(Y)
+    # Z_tree = optimal_leaf_ordering(Z, Y)
+    # Z_index = leaves_list(Z_tree)
+    # cor_mean_ordered = cor_mean[Z_index][:, Z_index]
+    # used_names_ordered = used_names[Z_index]
 
     ## correlation map
     sns.set(font_scale=0.8)
-    hm_cor_mean = sns.clustermap(cor_mean_ordered, xticklabels=True, yticklabels=True, col_cluster=False,
-                                 row_cluster=False, cmap='jet', vmin=-1, vmax=1, cbar_pos=(0.02, 0.79, 0.03, 0.2),
+    hm = sns.clustermap(temp_cor_mean, method='weighted', xticklabels=True, yticklabels=True, cmap='jet', vmin=-1, vmax=1, cbar_pos=(0.02, 0.79, 0.03, 0.2),
                                  figsize=(6.7, 7))
-    return hm_cor_mean, used_names_ordered
+    ordered_indices = hm.dendrogram_row.reordered_ind
+    ordered_names = used_names[ordered_indices]
+    temp_ordered_cor_mean = hm.data2d
+    ordered_cor_mean = np.where(temp_ordered_cor_mean==0, np.nan, temp_ordered_cor_mean)
+    hm_cor_mean = sns.clustermap(ordered_cor_mean, xticklabels=True, yticklabels=True, cmap='jet', vmin=-1, vmax=1, cbar_pos=(0.02, 0.79, 0.03, 0.2),
+                                 row_cluster=False, col_cluster=False, figsize=(6.7, 7))
+    return hm_cor_mean, ordered_names
 
 
 
@@ -451,15 +456,15 @@ def p2a(p_value):
 def comp2thr(data):
     def threshold(data):
         thr = []
-        for i in range(len(data[1])):
+        for i in range(len(data[0])):
             thr.append(threshold_otsu(data[:, i]))
         return thr
     cross = []
     time = []
     thr = threshold(data)
-    for i in range(len(data[1])):
+    for i in range(len(data[0])):
         cross2 = []
-        for j in range(len(data[0])-1):
+        for j in range(len(data)-1):
             crossing = np.nonzero(np.atleast_1d((data[j, i] - thr[i]) * (data[j + 1, i] - thr[i]) < 0))[0]
             if len(crossing) > 0:
                 for c in crossing:
@@ -485,8 +490,8 @@ def young_times(all):
     folder_path = 'D:/Connectivity/metadata_states'
 
     for samplei in range(n_samples):
-        file = 'times_sample' + str(samplei) + '.csv'
-        name = 'name_sample' + str(samplei) + '.csv'
+        file = 'tar_times_sample' + str(samplei) + '.csv'
+        name = 'tar_name_sample' + str(samplei) + '.csv'
         file_path = os.path.join(folder_path, file)
         name_path = os.path.join(folder_path, name)
         with open(file_path, 'r') as times:
@@ -519,8 +524,8 @@ def old_times(all):
     folder_path = 'D:/Connectivity/metadata_states'
 
     for samplei in range(n_samples):
-        file = 'old_times_sample' + str(samplei) + '.csv'
-        name = 'old_name_sample' + str(samplei) + '.csv'
+        file = 'old_tar_times_sample' + str(samplei) + '.csv'
+        name = 'old_tar_name_sample' + str(samplei) + '.csv'
         file_path = os.path.join(folder_path, file)
         name_path = os.path.join(folder_path, name)
         with open(file_path, 'r') as times:
@@ -546,7 +551,7 @@ def ttest(A, B):
     n = A.shape[1]
     statistic = np.empty((n,))
     p_value = np.empty((n,))
-    for i in range(len(A[1])):
+    for i in range(len(A[0])):
         va = A[:, i][~np.isnan(A[:, i])]
         vb = B[:, i][~np.isnan(B[:, i])]
         stat, p = ttest_ind(va, vb)
