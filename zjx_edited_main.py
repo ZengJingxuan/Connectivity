@@ -9,8 +9,9 @@ from scipy.signal import savgol_filter
 from statsmodels.stats.multitest import multipletests
 
 
-# ch1_p = r"230421-9DA-W1-ch1.csv"
-# ch2_p = r"230421-9DA-W1-ch2.csv"
+ch1_p = r"230512-9DA-W1-ch1.csv"
+ch2_p = r"230512-9DA-W1-ch2.csv"
+y1 = zpr.main(ch1_p, ch2_p)
 
 ch1_p = r"230102-W3-ch1.csv"
 ch2_p = r"230102-W3-ch2.csv"
@@ -63,15 +64,18 @@ pd.DataFrame(name_anno_y1).to_csv("name_sample3.csv")
 pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
 
 
-#######  smooth, count times, t-test, multipletest ######
-y1_smooth = savgol_filter(y1_anno, 5, 2, axis=0)
-thresh, times, cross = zpr.comp2thr(y1_smooth)
+#######  target neurons, smooth, count times, t-test, multipletest ######
+y2 = savgol_filter(y1, 61, 3, axis=0)
+y3 = y2[100:900, :]
+thresh, times, cross = zpr.comp2thr(y3)
 pd.DataFrame(name_anno_y1).to_csv("old_name_sample2.csv")
 pd.DataFrame(times).to_csv("old_times_sample2.csv")
 
-all = pd.read_csv(r"D:/Connectivity/metadata_states/allneurons.csv")
-times = zpr.young_times(all)
-old_times = zpr.old_times(all)
+
+
+tar = pd.read_csv(r"D:/Connectivity/metadata_states/target_neurons.csv")
+times = zpr.young_times(tar)
+old_times = zpr.old_times(tar)
 
 sta_t, p_t = zpr.ttest(times, old_times)
 # reject, adjusted_p, _, _ = multipletests(p_t, 0.05, method='fdr_bh')
@@ -83,7 +87,7 @@ old_times2 = old_used_times[ind_t]
 p_t2 = p_t[ind_t]
 aster_t = zpr.p2a(p_t2)
 
-N = all.values
+N = tar.values
 NN = N[:, 1]
 Name = NN.T[ind_t[0]]
 ###
@@ -139,8 +143,8 @@ cor = np.nanmean(allcoarray, axis=0).squeeze()     ### 2d all (for save csv, dif
 hm_young_all, used_names_ordered = zpr.hm_all(allcoarray, allNames)
 used_xnames = used_names_ordered.copy()
 used_ynames = zpr.re_name_mean(used_names_ordered)
-hm_young_all.ax_heatmap.set_yticklabels(used_ynames)
-hm_young_all.ax_heatmap.set_xticklabels(used_xnames)
+hm_young_all.ax_heatmap.set_yticklabels(used_ynames, fontsize=7)
+hm_young_all.ax_heatmap.set_xticklabels(used_xnames, fontsize=7)
 
 ## old, all
 old_all = pd.read_csv(r"D:/Connectivity/metadata/allneurons.csv")
@@ -150,8 +154,8 @@ old_cor = np.nanmean(old_allcoarray, axis=0).squeeze()   ### 2d all (for save cs
 hm_old_all, old_used_names_ordered = zpr.hm_all(old_allcoarray, old_allNames)
 old_used_xnames = old_used_names_ordered.copy()
 old_used_ynames = zpr.re_name_mean(old_used_names_ordered)
-hm_old_all.ax_heatmap.set_yticklabels(old_used_ynames)
-hm_old_all.ax_heatmap.set_xticklabels(old_used_xnames)
+hm_old_all.ax_heatmap.set_yticklabels(old_used_ynames, fontsize=7)
+hm_old_all.ax_heatmap.set_xticklabels(old_used_xnames, fontsize=7)
 
 
 zpr.histplot(cor, label='1DA')
@@ -210,12 +214,12 @@ pd.DataFrame(p).to_csv("P_tar.csv")
 
 
 ############# visualization ###########################
-young = r"1DA-mean_tar_cor.csv"
-old = r"9DA-mean_tar_cor.csv"
-names = r"1DA-mean_tar_names.csv"
-# young = r"1DA_cor.csv"
-# old = r"9DA_cor.csv"
-# names = r"1DA_names.csv"
+young = r"D:/Connectivity/data/1DA-mean_tar_cor.csv"
+old = r"D:/Connectivity/data/9DA-mean_tar_cor.csv"
+names = r"D:/Connectivity/data/1DA-mean_tar_names.csv"
+# young = r"D:/Connectivity/data/1DA_cor.csv"
+# old = r"D:/Connectivity/data/9DA_cor.csv"
+
 
 y = pd.read_csv(young, index_col=0)
 o = pd.read_csv(old, index_col=0)
@@ -257,7 +261,7 @@ name2 = name.tolist()
 name3 = ','.join(str(i) for i in name2)
 name4 = name3.split(",")
 
-#####  one * heatmap, 84 neural pairs
+#####  two ** heatmap, 84 neural pairs
 p5 = p4.reshape(7, 12)
 name5 = np.array(name4)
 name6 = name5.reshape(7, 12)
@@ -271,7 +275,7 @@ for i in range(name6.shape[0]):
 # pd.DataFrame(name).to_csv("p_one-aster_name.csv")
 
 
-### for all and **, variable names change:  y2--y3; o2--o3
+### for all **, variable names change:  y2--y3; o2--o3
 x = np.arange(len(y2))
 width = 0.25
 plt.figure(figsize=(8, 6))
@@ -279,7 +283,7 @@ rect_y = plt.bar(x - width/2, y2, width, label='young')
 rect_o = plt.bar(x + width/2, o2, width, label='old')
 
 plt.grid(axis='y', alpha=0.3)
-plt.ylabel("value", fontsize=18)
+plt.ylabel("correlation value", fontsize=18)
 plt.xticks(x, name4, rotation=45, fontsize=11)
 # plt.xticks(x, name4, rotation=90, fontsize=7)
 plt.legend(fontsize=14)
