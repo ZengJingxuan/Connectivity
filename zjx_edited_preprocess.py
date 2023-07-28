@@ -85,16 +85,17 @@ def rm_nan(x, y):
     return np.asarray(x), np.asarray(y)
 
 def de_trend(mat):
-    def fun(x, a, b, c):
-        return c * np.exp(-a * x) + b
+    def fun(x, a, b, c, d):
+        return c * np.exp(-a * x) + b + d * x
     mat = mat.T
     time_series = np.linspace(0, mat.shape[1] - 1, num=mat.shape[1])
     new = []
     for data in mat:
     ### x, y = rm_nan(list(time_series), list(data))
         x, y = list(time_series), list(data)
-        f, err = curve_fit(fun, x, y, p0=[0.003, 0.5, 0.5], maxfev=5000)
-        curve = fun(time_series, f[0], f[1], f[2])
+        bounds = ([-np.inf, -np.inf, -np.inf, 0], [np.inf, np.inf, np.inf, np.inf])
+        f, err = curve_fit(fun, x, y, p0=[0.003, 0.5, 0.5, 0.0001], bounds=bounds, maxfev=10000)
+        curve = fun(time_series, f[0], f[1], f[2], f[3])
         new.append(curve)
     new = np.asarray(new)
     mat = mat / new
@@ -160,7 +161,7 @@ def main(ch1_p,ch2_p):
 def select_tar(ch1_p, ch2_p, arr):
     y1 = main(ch1_p, ch2_p)
     name = y1.columns
-    targets = np.array(['AVAL','AVAR','AVDL','AVDR','AVEL','AVER','RIML','RIMR','AIBL','AIBR','RIBL','RIBR','RMEL','RMER','AVBL','AVBR'])
+    targets = np.array(['AVAL','AVAR','AVDL','AVDR','AVEL','AVER','RIML','RIMR','AIBL','AIBR','RIBL','RIBR','RMEL','RMER','AVBL','AVBR', 'RMED', 'RMEV', 'OLQVL', 'OLQVR', 'OLQDL', 'OLQDR', 'SMDVL', 'SMDVR', 'SMBDL', 'SMBDR'])
     matches = []
     for query in targets:
       print(query)
@@ -285,7 +286,7 @@ def old_mean_tar(old_tar):
     old_tarN = old_tar.iloc[:, 1]
     old_tarNames = np.array(old_tarN)
     old_Mt = len(old_tarNames)
-    old_samples = list(range(1, 8))
+    old_samples = list(range(1, 7))
     old_nsamples = len(old_samples)
 
     old_coarray = np.zeros((old_nsamples, old_Mt, old_Mt))
@@ -352,7 +353,7 @@ def old_mean(old_all):
     old_allN = old_all.iloc[:, 1]
     old_allNames = np.array(old_allN)
     old_Ma = len(old_allNames)
-    old_allsamples = list(range(1, 8))
+    old_allsamples = list(range(1, 7))
     old_n_allsamples = len(old_allsamples)
 
     old_allcoarray = np.zeros((old_n_allsamples, old_Ma, old_Ma))
@@ -490,7 +491,7 @@ def young_times(all):
     folder_path = 'D:/Connectivity/metadata_states'
 
     for samplei in range(n_samples):
-        file = 'tar_times_sample' + str(samplei) + '.csv'
+        file = 'times_sample' + str(samplei) + '.csv'
         name = 'tar_name_sample' + str(samplei) + '.csv'
         file_path = os.path.join(folder_path, file)
         name_path = os.path.join(folder_path, name)
@@ -516,7 +517,7 @@ def old_times(all):
     N = all.iloc[:, 1]
     Names = np.array(N)
     M = len(Names)
-    samples = list(range(1, 8))
+    samples = list(range(1, 7))
     n_samples = len(samples)
 
     alltimes = np.zeros((n_samples, M))
@@ -524,7 +525,7 @@ def old_times(all):
     folder_path = 'D:/Connectivity/metadata_states'
 
     for samplei in range(n_samples):
-        file = 'old_tar_times_sample' + str(samplei) + '.csv'
+        file = 'old_times_sample' + str(samplei) + '.csv'
         name = 'old_tar_name_sample' + str(samplei) + '.csv'
         file_path = os.path.join(folder_path, file)
         name_path = os.path.join(folder_path, name)
