@@ -9,15 +9,15 @@ from scipy.signal import savgol_filter
 from statsmodels.stats.multitest import multipletests
 
 
-ch1_p = r"230512-9DA-W1-ch1.csv"
-ch2_p = r"230512-9DA-W1-ch2.csv"
+
+ch1_p = r"230421-9DA-W1-ch1.csv"
+ch2_p = r"230421-9DA-W1-ch2.csv"
 y1 = zpr.main(ch1_p, ch2_p)
 
-ch1_p = r"230102-W3-ch1.csv"
-ch2_p = r"230102-W3-ch2.csv"
-# generate normalized mat
-y1 = zpr.main(ch1_p, ch2_p)
-
+# ch1_p = r"230102-W3-ch1.csv"
+# ch2_p = r"230102-W3-ch2.csv"
+# # generate normalized mat
+# y1 = zpr.main(ch1_p, ch2_p)
 
 # select target neurons
 y1_tar = zpr.select_tar(ch1_p, ch2_p, y1)
@@ -31,8 +31,9 @@ co_y1_tar = np.corrcoef(y1_tar.T)
 co_hm_y1_tar = sns.clustermap(co_y1_tar, xticklabels=tar_name_y1, yticklabels=tar_name_y1, col_cluster=False, row_cluster=False, cmap='jet',vmin=-1, vmax=1,cbar_pos=(0.1, 0.595, 0.03, 0.2))
 ## values for correlation map
 
-pd.DataFrame(co_y1_tar).to_csv("tar_cor_sample3.csv")
-pd.DataFrame(tar_name_y1).to_csv("tar_name_sample3.csv")
+
+pd.DataFrame(co_y1_tar).to_csv("old_tar_cor_sample3.csv")
+pd.DataFrame(tar_name_y1).to_csv("old_tar_name_sample3.csv")
 
 
 ### all neurons
@@ -50,9 +51,11 @@ co_y1.ax_heatmap.set_yticklabels(co_y1_ynames)
 co_y1.ax_heatmap.set_xticklabels(co_y1_xnames)
 ## values for correlation map
 
-zpr.histplot(co_eff_y1, label='0102-1DA-W3')
-plt.legend()
+zpr.histplot(co_eff_y1, label='0421-9DA-W1')
+plt.ylabel('Probability', fontsize=18)
+plt.legend(fontsize=18)
 plt.show()
+
 
 # only save annotated neurons
 y1_all_names = y1.columns.values.tolist()
@@ -60,15 +63,14 @@ y1_anno_names = [name for name in y1_all_names if re.match(r'^[A-Za-z]', name)]
 y1_anno = y1[y1_anno_names]
 name_anno_y1 = y1_anno.columns.values
 co_anno_y1 = np.corrcoef(y1_anno.T)
-pd.DataFrame(name_anno_y1).to_csv("name_sample3.csv")
-pd.DataFrame(co_anno_y1).to_csv("cor_sample3.csv")     ##记得old
+pd.DataFrame(name_anno_y1).to_csv("old_name_sample3.csv")
+pd.DataFrame(co_anno_y1).to_csv("old_cor_sample3.csv")     ##记得old
 
 
 #######  target neurons, smooth, count times, t-test, multipletest ######
-y2 = savgol_filter(y1, 61, 3, axis=0)
+y2 = savgol_filter(y1_tar, 61, 3, axis=0)
 y3 = y2[100:900, :]
 thresh, times, cross = zpr.comp2thr(y3)
-pd.DataFrame(name_anno_y1).to_csv("old_name_sample2.csv")
 pd.DataFrame(times).to_csv("old_times_sample2.csv")
 
 
@@ -91,19 +93,16 @@ N = tar.values
 NN = N[:, 1]
 Name = NN.T[ind_t[0]]
 ###
-X = np.arange(len(times2))
+X = np.arange(len(used_times))
 width = 0.25
 plt.figure(figsize=(8, 6))
-rect_Y = plt.bar(X - width/2, times2, width, label='young')
-rect_O = plt.bar(X + width/2, old_times2, width, label='old')
+rect_Y = plt.bar(X - width/2, used_times, width, label='young')
+rect_O = plt.bar(X + width/2, old_used_times, width, label='old')
 
 plt.grid(axis='y', alpha=0.3)
 plt.ylabel("times", fontsize=18)
-plt.xticks(X, Name, rotation=45, fontsize=11)
+plt.xticks(X, NN, rotation=45, fontsize=18)
 plt.legend(fontsize=14)
-
-for xi, oi, val in zip(X, old_times2, aster_t):
-    plt.text(xi+0.17, oi, str(val), ha='right', va='bottom', fontsize=14)
 plt.show()
 
 
@@ -131,8 +130,8 @@ plt.yticks(fontsize=14)
 plt.legend(fontsize=15)
 plt.show()
 
-pd.DataFrame(old_coarray).to_csv("9DA-mean_old_tar_cor.csv")
-pd.DataFrame(coarray).to_csv("1DA-mean_tar_cor.csv")
+pd.DataFrame(old_cor_tar).to_csv("9DA-mean_tar_cor.csv")
+pd.DataFrame(cor_tar).to_csv("1DA-mean_tar_cor.csv")
 
 
 ## young, all
@@ -160,10 +159,11 @@ hm_old_all.ax_heatmap.set_xticklabels(old_used_xnames, fontsize=7)
 
 zpr.histplot(cor, label='1DA')
 zpr.histplot(old_cor, label='9DA')
-plt.ylabel('Probability', fontsize=18)
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
-plt.legend(fontsize=15)
+plt.ylabel('Probability', fontsize=22)
+plt.grid(axis='y', alpha=0.3)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.legend(fontsize=22)
 plt.show()
 ###################################################################################
 
@@ -197,7 +197,7 @@ d, p4d = kstest(cor3, old_cor3, 'two-sided')
 
 ### U-test,  allcoarray: 3D     young: 8, old: 7;    for n:  target:16;  all: 232  ##############
 Young = allcoarray.reshape((8, -1))
-Old = old_allcoarray.reshape((7, -1))
+Old = old_allcoarray.reshape((6, -1))
 sta2, p2 = zpr.ranksum(Young, Old)
 p3 = p2.reshape(232, 232)
 sta3 = sta2.reshape(232, 232)
@@ -214,11 +214,11 @@ pd.DataFrame(p).to_csv("P_tar.csv")
 
 
 ############# visualization ###########################
-young = r"D:/Connectivity/data/1DA-mean_tar_cor.csv"
-old = r"D:/Connectivity/data/9DA-mean_tar_cor.csv"
-names = r"D:/Connectivity/data/1DA-mean_tar_names.csv"
-# young = r"D:/Connectivity/data/1DA_cor.csv"
-# old = r"D:/Connectivity/data/9DA_cor.csv"
+young = r"D:/Connectivity/data-new/1DA-mean_tar_cor.csv"
+old = r"D:/Connectivity/data-new/9DA-mean_tar_cor.csv"
+names = r"D:/Connectivity/data-new/tar_names.csv"
+# young = r"D:/Connectivity/data-new/1DA-mean_cor.csv"
+# old = r"D:/Connectivity/data-new/9DA-mean_cor.csv"
 
 
 y = pd.read_csv(young, index_col=0)
@@ -227,10 +227,17 @@ n = pd.read_csv(names, index_col=0)        ## dataframe
 ov = o.values                              ## array
 yv = y.values
 nv = n.values
-##########   p-value heatmap,  only tril, better for target neurons  ################
-mask = np.triu(np.ones_like(p3), k=1)
-hm_p = sns.heatmap(p3, xticklabels=nv, yticklabels=nv, vmin=0, vmax=1, cmap='RdBu', annot=True, mask=mask)
-#########
+##########   p-value heatmap,   better for target neurons  ################
+cmap = plt.cm.hot
+threshold = 0.05
+new_p3 = np.where(p3 > threshold, threshold, p3)
+plt.imshow(new_p3, cmap=cmap, vmin=0, vmax=threshold, interpolation='nearest')
+plt.colorbar()  # 显示颜色条
+plt.grid(alpha=0.3)
+plt.yticks((np.arange(len(tarNames))), tarNames, fontsize=12)
+plt.xticks((np.arange(len(tarNames))), tarNames, rotation=45, fontsize=12)
+plt.show()
+#############################################################################
 ind = np.where((p < 0.05) & (p != 0))
 # ind = np.where((p < 0.05) & (p != 0) & (p > 0.01))
 y2 = yv[ind]
@@ -261,18 +268,6 @@ name2 = name.tolist()
 name3 = ','.join(str(i) for i in name2)
 name4 = name3.split(",")
 
-#####  two ** heatmap, 84 neural pairs
-p5 = p4.reshape(7, 12)
-name5 = np.array(name4)
-name6 = name5.reshape(7, 12)
-hm = sns.heatmap(p5, vmin=0.001, vmax=0.01, cmap='RdBu', annot=True, linewidth=0.6)
-for i in range(name6.shape[0]):
-    for j in range(name6.shape[1]):
-        text = name6[i][j] # 自定义的文本内容
-        hm.text(j+0.45, i+0.35, text, ha='center', va='center', fontsize=9)
-
-
-# pd.DataFrame(name).to_csv("p_one-aster_name.csv")
 
 
 ### for all **, variable names change:  y2--y3; o2--o3
