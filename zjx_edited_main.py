@@ -6,6 +6,8 @@ import numpy as np
 import re
 from scipy.stats import kstest
 from scipy.signal import savgol_filter
+from collections import Counter
+from scipy.stats import ttest_ind
 from statsmodels.stats.multitest import multipletests
 
 
@@ -165,8 +167,32 @@ plt.xticks(fontsize=18)
 plt.yticks(fontsize=18)
 plt.legend(fontsize=22)
 plt.show()
-###################################################################################
 
+
+#############  proportion of neg and pos  ######################################################
+allsamples = list(range(1, 9))
+old_allsamples = list(range(1, 7))
+ypneg, yppos = zpr.young_pro(allsamples)
+opneg, oppos = zpr.old_pro(old_allsamples)
+y_pos_mean = np.mean(yppos)
+y_neg_mean = np.mean(ypneg)
+o_pos_mean = np.mean(oppos)
+o_neg_mean = np.mean(opneg)
+psta, pp = ttest_ind(yppos, oppos)
+nsta, np = ttest_ind(ypneg, opneg)
+neg_reject, neg_adj_p, _, _ = multipletests(np, 0.05, method='fdr_bh')
+pos_reject, pos_adj_p, _, _ = multipletests(pp, 0.05, method='fdr_bh')
+
+x = 1
+width = 0.25
+plt.figure(figsize=(8, 6))
+rect_y = plt.bar(x - width/2, y_neg_mean, width, label='young')
+rect_o = plt.bar(x + width/2, o_neg_mean, width, label='old')
+plt.grid(axis='y', alpha=0.3)
+plt.ylabel("proportion", fontsize=18)
+plt.xticks([])
+plt.legend()
+plt.show()
 
 
 
@@ -209,7 +235,7 @@ sta = np.tril(sta3, k=-1)
 # p7 = np.array(p6)
 # reject, adjusted_p, _, _ = multipletests(p7, 0.05, method='fdr_bh')
 
-pd.DataFrame(p).to_csv("P_tar.csv")
+pd.DataFrame(p).to_csv("P_all.csv")
 
 
 
@@ -227,11 +253,15 @@ n = pd.read_csv(names, index_col=0)        ## dataframe
 ov = o.values                              ## array
 yv = y.values
 nv = n.values
-##########   p-value heatmap,   better for target neurons  ################
+##########   p-value heatmap,   only p<0.05 show colors  ################
 cmap = plt.cm.hot
 threshold = 0.05
-new_p3 = np.where(p3 > threshold, threshold, p3)
-plt.imshow(new_p3, cmap=cmap, vmin=0, vmax=threshold, interpolation='nearest')
+pnon = ~np.isnan(p3).all(axis=1)
+p5 = p3[pnon]
+pn = ~np.isnan(p3).all(axis=0)
+p6 = p5[:, pn]
+new_p6 = np.where(p6 > threshold, threshold, p6)
+plt.imshow(new_p6, cmap=cmap, vmin=0, vmax=threshold, interpolation='nearest')
 plt.colorbar()  # 显示颜色条
 plt.grid(alpha=0.3)
 plt.yticks((np.arange(len(tarNames))), tarNames, fontsize=12)
@@ -267,6 +297,13 @@ for i in range(len(row2)):
 name2 = name.tolist()
 name3 = ','.join(str(i) for i in name2)
 name4 = name3.split(",")
+
+##### number of changed neurons
+chan = np.concatenate((row2, col2))
+counter = Counter(chan)  # 使用 Counter 统计元素出现次数
+for element, count in counter.items():
+    print(element, count)
+count = np.array(counter.most_common())
 
 
 
