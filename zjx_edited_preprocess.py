@@ -423,6 +423,68 @@ def hm_all(allcoarray, allNames):
     return hm_cor_mean, ordered_names
 
 
+############  calculate proporetion of pos and neg ###############
+def young_pro(samples):
+    n_allsamples = len(samples)
+    neg_array = []
+    pos_array = []
+    folder_path = 'D:/Connectivity/metadata'
+
+    for allsamplei in range(n_allsamples):
+        all_file = 'cor_sample' + str(allsamplei) + '.csv'
+        all_file_path = os.path.join(folder_path, all_file)
+        with open(all_file_path, 'r') as all_cor:
+            all_data = pd.read_csv(all_cor, index_col=0, header=None, skiprows=1)  ##  dataframe
+        all_data = all_data.to_numpy()
+        data = np.tril(all_data, k=-1)
+        lall = (len(data) * (len(data) - 1)) / 2
+        ind_n = np.where(data < -0.2)
+        neg = data[ind_n]
+        lneg = len(neg)
+        pro_neg = lneg / lall
+        neg_array.append(pro_neg)
+
+        ind_p = np.where(data > 0.2)
+        pos = data[ind_p]
+        lpos = len(pos)
+        pro_pos = lpos / lall
+        pos_array.append(pro_pos)
+        pneg = np.array(neg_array)
+        ppos = np.array(pos_array)
+        pneg = pneg.astype(float)
+        ppos = ppos.astype(float)
+    return pneg, ppos
+
+def old_pro(samples):
+    n_allsamples = len(samples)
+    neg_array = []
+    pos_array = []
+    folder_path = 'D:/Connectivity/metadata'
+
+    for allsamplei in range(n_allsamples):
+        all_file = 'old_cor_sample' + str(allsamplei) + '.csv'
+        all_file_path = os.path.join(folder_path, all_file)
+        with open(all_file_path, 'r') as all_cor:
+            all_data = pd.read_csv(all_cor, index_col=0, header=None, skiprows=1)  ##  dataframe
+        all_data = all_data.to_numpy()
+        data = np.tril(all_data, k=-1)
+        lall = (len(data) * (len(data) - 1)) / 2
+        ind_n = np.where(data < -0.2)
+        neg = data[ind_n]
+        lneg = len(neg)
+        pro_neg = lneg / lall
+        neg_array.append(pro_neg)
+
+        ind_p = np.where(data > 0.2)
+        pos = data[ind_p]
+        lpos = len(pos)
+        pro_pos = lpos / lall
+        pos_array.append(pro_pos)
+        pneg = np.array(neg_array)
+        ppos = np.array(pos_array)
+        pneg = pneg.astype(float)
+        ppos = ppos.astype(float)
+    return pneg, ppos
 
 
 ### statistic difference: U-tset
